@@ -1,21 +1,34 @@
+import java.util.ArrayList;
 import java.util.Scanner;
 
+/**
+ * Reads an integer list and starts two workers to check for a subset sum.
+ *
+ * <p>The input is stored as {@code ArrayList<Integer>} and converted to the
+ * legacy {@code int[]} representation when passed to {@link SharedData}.</p>
+ */
 public class TestThreadCheckArray {
-    public  void main(String[] args) {
+    /**
+     * Reads input, runs the subset-sum workers, and prints their result.
+     *
+     * @param args command-line arguments (unused)
+     */
+    public static void main(String[] args) {
         try (Scanner input = new Scanner(System.in)) {
             Thread thread1, thread2;
             System.out.println("Enter array size");
             int num  = input.nextInt();
-            int[] array = new int[num];
+            ArrayList<Integer> array = new ArrayList<>(num);
             System.out.println("Enter numbers for array");
 
             for (int index = 0; index < num; index++)
-                array[index] = input.nextInt();
+                array.add(input.nextInt());
 
             System.out.println("Enter number");
             num = input.nextInt();
 
-            SharedData sd = new SharedData(array, num);
+            int[] sharedArray = array.stream().mapToInt(Integer::intValue).toArray();
+            SharedData sd = new SharedData(sharedArray, num);
 
             thread1 = new Thread(new ThreadCheckArray(sd), "thread1");
             thread2 = new Thread(new ThreadCheckArray(sd), "thread2");
