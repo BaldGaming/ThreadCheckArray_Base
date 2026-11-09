@@ -1,26 +1,38 @@
 import java.util.ArrayList;
 
 /**
- * Searches the input sequence for a subset whose values sum to a target.
- * Instances sharing the same {@link SharedData} coordinate through its
- * solution-found flag.
+ * Searches for a subset of integer values whose sum equals a target.
+ *
+ * <p>Each instance explores one half of the search space: the worker named
+ * {@code thread1} starts with the final input value included, while the other
+ * worker starts with it excluded. The remaining values are tested recursively
+ * using include and exclude branches. Workers sharing the same
+ * {@link SharedData} instance coordinate through its solution-found flag and
+ * publish their selection in a primitive {@code boolean[]}.</p>
+ *
+ * <p>The search uses exponential time in the worst case and recursion depth
+ * proportional to the number of input values.</p>
  */
 public class ThreadCheckArray implements Runnable {
-    /** Indicates whether this worker has found a solution. */
+    /** Indicates whether this worker's search branch found a solution. */
     private boolean flag;
-    /** Marks the sequence positions selected by this worker. */
+    /** Marks the input positions selected by this worker, if successful. */
     private boolean[] winArray;
-    /** Shared input and result state. */
+    /** Shared sequence, target, completion flag, and result. */
     SharedData sd;
-    /** Sequence of values examined by this worker. */
+    /** Sequence of values examined by this worker as an {@code ArrayList<Integer>}. */
     ArrayList<Integer> array;
-    /** Target sum to match. */
+    /** Target sum that the selected values must match. */
     int b;
 
     /**
-     * Creates a worker using the sequence and target held in shared state.
+     * Creates a search worker and initializes its position markers.
      *
-     * @param sd shared sequence, target, and result state
+     * <p>The worker obtains the shared sequence and target while holding the
+     * shared-state monitor. Its private selection array is sized to match the
+     * number of values in the sequence.</p>
+     *
+     * @param sd shared sequence, target, and result state used by this worker
      */
     public ThreadCheckArray(SharedData sd) {
         this.sd = sd;
@@ -32,11 +44,19 @@ public class ThreadCheckArray implements Runnable {
     }
 
     /**
-     * Recursively searches the first {@code n} values, considering each value
-     * either included in or excluded from the current sum.
+     * Recursively searches the first {@code n} values for the remaining sum.
+     *
+     * <p>For each value, this method first explores the branch that includes
+     * it, subtracting its value from the required sum, and then explores the
+     * branch that excludes it. If another worker has already found a
+     * solution, this branch returns early. The selected positions are recorded
+     * in this worker's {@code winArray}.</p>
+     *
+     * <p>This method expects {@code n} to be at least one; the worker's
+     * {@link #run()} method handles the one-element input separately.</p>
      *
      * @param n number of values in the current search prefix
-     * @param b remaining sum to match
+     * @param b remaining sum required from the first {@code n} values
      */
     void rec(int n, int b) {
         synchronized (sd) {
@@ -60,9 +80,13 @@ public class ThreadCheckArray implements Runnable {
     }
 
     /**
-     * Starts this worker's search. The worker named {@code thread1} begins by
-     * including the last value; the other worker begins by excluding it.
-     * Publishes this worker's position markers if it finds a solution.
+     * Runs this worker's assigned search branch.
+     *
+     * <p>The worker named {@code thread1} begins with the final input value
+     * included; the other worker begins with it excluded. For a one-element
+     * input, the value is checked directly. If this worker finds a solution,
+     * it records the corresponding position markers and publishes them to the
+     * shared state.</p>
      */
     public void run() {
         if (array.size() != 1)

@@ -1,130 +1,107 @@
-# Ilya Zeldner - Software Engineering Methods – Lab Exercise 2: Configuration Management & AI-Driven Refactoring
+# Multithreaded Subset Sum
 
-**Department of Software Engineering | Braude College of Engineering**  
-**Course:** Software Engineering Methods (2026–2027)  
-**Platform:** IntelliJ IDEA 2026.2 | BellSoft Liberica Full JDK 25 LTS | Git & GitHub | Continue (LM Studio)
+A small Java console program that searches for a subset of integer values whose
+sum equals a target. Two worker threads split the search into separate branches
+and coordinate through a shared state object.
 
----
+## Requirements
 
-## Executive Overview
-In this lab exercise, students collaborate in pairs to modernize a multithreaded Java implementation of the classic **Subset Sum** decision problem. Working across isolated branches, students utilize a local, open-source AI coding assistant (**Continue** powered by **Qwen2.5-Coder**) to refactor legacy primitive arrays to modern generic collections (`ArrayList<Integer>`), generate strict JDK-compliant Javadoc documentation, intentionally introduce concurrent merge conflicts, and resolve them using IntelliJ IDEA's visual **3-Way Merge** tool.
+- Java Development Kit (JDK) with `javac`, `java`, and `javadoc` on `PATH`
+- Git (for working with the project history and collaboration branches)
 
-### Core Learning Objectives
-- **Modern Version Control:** Master real-world Git flows (initiating repositories, strict branch isolation, remote synchronizations, commit hygiene, and `.gitignore` governance).
-- **AI-Assisted Modernization:** Leverage local LLMs for structured refactoring, code translation, and automated Javadoc authoring.
-- **Conflict Engineering:** Synthesize divergent code paths and resolve line-level conflicts cleanly using 3-Way diff visualizers.
-- **Quality Assurance & Traceability:** Execute verification smoke tests and evaluate individual code ownership through `git blame` (`Annotate with Git Blame`).
+The project uses the default Java package and has no external dependencies.
 
----
+## Build and run
 
-## Repository Directory Map
-The repository is organized into three dedicated operational sections:
+From the repository root, compile the three source files and start the console
+program:
 
-```text
-braude-Engineering-Methods-Tutorial-2/
-│
-├── חומרי קריאה מקדימים והסברים/
-│   ├── מדריך_מושגים_ועבודה_עם_Git_ו_GitHub_ב_IntelliJ.docx
-│   │     └── Comprehensive Hebrew guide covering Git stages, branching, 
-│   │         .gitignore, 3-Way Merge, and IntelliJ shortcuts.
-│   └── מדריך_מלא_התקנה_תיקון_ועבודה_עם_Continue_ב_IntelliJ.docx
-│         └── Complete setup guide for Continue, JetBrains Marketplace download,
-│             IntelliJ 2026.2 JCEF compatibility patch, and LM Studio parameters.
-│
-├── קבצי עבודה לתרגול/
-│   ├── תרגול 2.docx
-│   │     └── The master laboratory instruction manual with step-by-step procedures.
-│   ├── Quick_Checklist_Exercise_2.docx
-│   │     └── An execution checklist for tracking task progression during the session.
-│   ├── ThreadCheckArray_Base.zip
-│   │     └── Starter Java project archive containing the base codebase and .gitignore.
-│   └── README_TEMPLATE.md
-│         └── Markdown template for student repository documentation.
-│
-└── הגשת המטלה/
-    └── ex2_submission_template.docx
-          └── Official laboratory report template with sections for team details,
-              evidence screenshots, prompt logs, and engineering reflection.
+```powershell
+New-Item -ItemType Directory -Force out
+javac -d out src\SharedData.java src\ThreadCheckArray.java src\TestThreadCheckArray.java
+java -cp out TestThreadCheckArray
 ```
 
----
-
-## Required Toolchain & Setup
-Before beginning the lab, ensure the following tools are properly configured:
-
-| Tool | Version / Specification | Role in Lab |
-| :--- | :--- | :--- |
-| **IntelliJ IDEA** | 2026.2 or newer | Core Integrated Development Environment |
-| **Java SDK** | BellSoft Liberica Full JDK 25 LTS (with JavaFX) | Compilation & runtime platform |
-| **Git Engine** | Git for Windows 2.40+ | Local version control engine |
-| **GitHub Account** | Active student account | Remote team collaboration host |
-| **LM Studio** | Local Server on `http://127.0.0.1:1234/v1` | Hosts local `Qwen2.5-Coder-7B-Instruct` |
-| **Continue** | IntelliJ Plugin (v1.0.67 + JCEF patch) | AI code assistant & inline refactoring interface |
-
----
-
-## Student Pair Programming Workflow Summary
+Enter the number of values, the values themselves, and the target sum. For
+example:
 
 ```text
-Student A (main branch)                    Student B (feature branch)
-       │                                              │
-       ├─► Init Repo & Initial Commit                 │
-       ├─► Push to GitHub & Invite Partner ───────────┼─► Accept Invite & Clone Repo
-       │                                              ├─► Create branch: feature/arraylist-refactor-b
-       ├─► Refactor SharedData.java                   ├─► Write Custom Prompt Challenge
-       ├─► Refactor ThreadCheckArray.java             ├─► Refactor TestThreadCheckArray.java
-       ├─► Commit & Push to main                      ├─► Refactor ThreadCheckArray.java
-       ├─► Generate & Push README.md                  ├─► Commit & Push feature branch
-       │                                              │
-       │                                              ├─► Switch to main & Pull partner commits
-       │                                              ├─► Merge feature branch into main
-       │                                              ├─► 💥 MERGE CONFLICT DETECTED 💥
-       │                                              ├─► Resolve via visual 3-Way Merge
-       │                                              ├─► Execute Smoke Test Verification
-       │                                              └─► Push resolved main to GitHub
-       ▼                                              ▼
-Student A pulls resolved main ◄───────────────────────┘
-Both verify via HTML Javadoc, Git Graph, and Annotate with Git Blame.
-```
-
----
-
-## Verification & Smoke Test Protocol
-Following conflict resolution and merge completion, execute `TestThreadCheckArray.java` using the standard verification input vector:
-
-### Test Input:
-```text
-Enter array size:
+Enter array size
 4
-Enter numbers for array:
+Enter numbers for array
 1 2 3 7
-Enter number:
+Enter number
 5
 ```
 
-### Expected Output:
-```text
-Solution for b : 5,n = 4
-I:    0    1    2    3    
-A:    1    2    3    7    
-C:    0    1    1    0    
+The program prints a binary selection row (`C`) for a found subset. In this
+example, the values `2` and `3` make the target `5`. If no solution is found,
+the program prints `Sorry`.
+
+## Search algorithm and thread coordination
+
+`ThreadCheckArray` implements `Runnable` and recursively explores include/exclude
+choices for the input values. For each value, the recursive search considers
+the branch that subtracts the value from the remaining target (include) and the
+branch that leaves the target unchanged (exclude). The worker records included
+positions in its private `boolean[] winArray`.
+
+The two workers partition the search using the final input value:
+
+- The thread named `thread1` starts with that value included.
+- The other thread starts with that value excluded.
+
+Together, those branches cover the possible subsets without both threads
+starting from the same choice. The search is exhaustive, with worst-case
+exponential time, `O(2^n)`, and recursion depth `O(n)`.
+
+Both workers share one `SharedData` instance. Its `flag` indicates that a
+solution has been found, and its `winArray` holds the published selection.
+Workers synchronize on that shared object when checking or setting the flag
+and when publishing their result. Once a worker finds a solution, it sets the
+shared flag; the other worker checks the flag during recursion and can stop
+early. Each worker's local `flag` and selection array are separate, while the
+shared flag and result communicate the outcome. The runner joins both threads
+before reading and printing the result.
+
+## `ArrayList<Integer>` refactoring
+
+The input sequence is represented as `ArrayList<Integer>` throughout the
+program. `TestThreadCheckArray` reads each value into the list,
+`SharedData` stores the list alongside the target and result state, and
+`ThreadCheckArray` reads values by index during recursion. This replaces the
+fixed-size primitive `int[]` representation with a generic, dynamically sized
+collection; Java's `Integer` wrapper type is used because Java collections
+store objects rather than primitive `int` values.
+
+## Javadoc
+
+The source types and documented API members include Javadoc comments describing
+their purpose, parameters, and return values. Generate browsable HTML
+documentation from the repository root with:
+
+```powershell
+javadoc -d docs src\SharedData.java src\ThreadCheckArray.java src\TestThreadCheckArray.java
 ```
-* **Explanation:** The binary solution vector row `C: 0 1 1 0` indicates that index `1` (value `2`) and index `2` (value `3`) form the subset sum equal to the target value `5` ($2 + 3 = 5$).
 
----
+Use `{@code ...}` for code fragments such as generic types inside Javadoc, so
+angle brackets are not parsed as HTML tags.
 
-## Essential Troubleshooting Tips
+## Authors and Git collaboration
 
-- **Built-in Terminal Profile Conflict:** If using Windows PowerShell with Anaconda/Conda, append `-NoProfile` in `Settings -> Tools -> Terminal -> Shell path`.
-- **First-Time GitHub Authentication:** When pushing or cloning for the first time, click **Log In via GitHub...**, approve the browser authorization prompt, and return to IntelliJ.
-- **Git Identity Prompt:** If IntelliJ displays "User Name and Email not configured", enter your full English name and institutional email (`username@e.braude.ac.il`).
-- **Unrelated Histories Error:** If partner repositories were created independently rather than cloned, resolve the history divergence in the terminal using:
-  ```bash
-  git merge feature/arraylist-refactor-b --allow-unrelated-histories
-  ```
-- **Javadoc Malformed HTML Warning:** Generic angle brackets (`<Integer>`) will fail Javadoc compilation. Ensure all references inside Javadoc comments are enclosed with `{@code <Integer>}`.
+The Git history records contributions by **Itay Rosen** and **Osher Amsalem**.
+Itay's commits on `main` include the `SharedData`/`ThreadCheckArray`
+`ArrayList<Integer>` refactor and Javadoc. Osher's work on
+`feature/arraylist-refactor-b` includes changes to `TestThreadCheckArray` and
+`ThreadCheckArray`. The feature branch was merged into `main` by Itay. The
+branch history illustrates collaborative development: parallel work on
+separate branches, integration, and merge-conflict resolution.
 
----
+## License
 
-## Academic Integrity & Licensing
-This laboratory package is developed for instructional use in the Department of Software Engineering at Braude College of Engineering. Distribution, publishing, or sharing outside the official course boundary is strictly prohibited under the **Braude College Academic License**.
+This project is distributed under the **Braude College Academic License** for
+instructional use in the Department of Software Engineering at Braude College
+of Engineering. The course materials state that distribution, publication, or
+sharing outside the official course boundary is prohibited. This is an
+academic-use designation, not a standard open-source license; consult the
+course or College for the authoritative license terms and permissions.

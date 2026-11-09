@@ -2,16 +2,31 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 /**
- * Reads an integer list and starts two workers to check for a subset sum.
+ * Console entry point for the two-thread subset-sum search.
  *
- * <p>The input is stored as {@code ArrayList<Integer>} and converted to the
- * legacy {@code int[]} representation when passed to {@link SharedData}.</p>
+ * <p>Reads an integer sequence and target sum, stores the sequence in an
+ * {@code ArrayList<Integer>}, creates shared search state, starts two
+ * {@link ThreadCheckArray} workers, and prints the discovered subset when one
+ * exists. The boolean selection array remains a primitive {@code boolean[]}
+ * because it records whether each corresponding input position is selected.</p>
  */
 public class TestThreadCheckArray {
     /**
-     * Reads input, runs the subset-sum workers, and prints their result.
+     * Creates the console application entry-point object.
+     */
+    public TestThreadCheckArray() {
+    }
+
+    /**
+     * Reads the sequence and target from standard input, runs both search
+     * workers to completion, and prints the result.
      *
-     * @param args command-line arguments (unused)
+     * <p>Input consists of a sequence length, that many integer values, and
+     * the target sum. The two workers divide the search according to whether
+     * the final value is included or excluded. Their shared result is read
+     * only after both threads have been joined.</p>
+     *
+     * @param args command-line arguments; not used by this program
      */
     public static void main(String[] args) {
         try (Scanner input = new Scanner(System.in)) {
@@ -27,8 +42,7 @@ public class TestThreadCheckArray {
             System.out.println("Enter number");
             num = input.nextInt();
 
-            int[] sharedArray = array.stream().mapToInt(Integer::intValue).toArray();
-            SharedData sd = new SharedData(sharedArray, num);
+            SharedData sd = new SharedData(array, num);
 
             thread1 = new Thread(new ThreadCheckArray(sd), "thread1");
             thread2 = new Thread(new ThreadCheckArray(sd), "thread2");
@@ -44,9 +58,9 @@ public class TestThreadCheckArray {
                 System.out.println("Sorry");
                 return;
             }
-            System.out.println("Solution for b : " + sd.getB() + ",n = " + sd.getArray().length);
+            System.out.println("Solution for b : " + sd.getB() + ",n = " + sd.getArray().size());
             System.out.print("I:    ");
-            for(int index = 0; index < sd.getArray().length ; index++)
+            for(int index = 0; index < sd.getArray().size() ; index++)
                 System.out.print(index + "    ");
             System.out.println();
             System.out.print("A:    ");
