@@ -2,7 +2,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 /**
- * Console entry point for the two-thread subset-sum search.
+ * Reads an integer list and starts two workers to check for a subset sum.
  *
  * <p>Reads an integer sequence and target sum, stores the sequence in an
  * {@code ArrayList<Integer>}, creates shared search state, starts two
