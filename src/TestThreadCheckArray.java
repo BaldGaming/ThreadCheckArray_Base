@@ -2,7 +2,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 /**
- * Reads an integer list and starts two workers to check for a subset sum.
+ * Reads  an integer list and starts two workers to check for a subset sum.
  *
  * <p>The input is stored as {@code ArrayList<Integer>} and converted to the
  * legacy {@code int[]} representation when passed to {@link SharedData}.</p>
